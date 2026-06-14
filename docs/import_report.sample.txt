@@ -1,0 +1,165 @@
+────────────────────────────────────────────────────────────────────────
+IMPORT REPORT — Flat 4B
+────────────────────────────────────────────────────────────────────────
+Total rows in file : 42
+Imported (active)  : 37
+Anomalies detected : 44
+  errors: 1   warnings: 15   info: 28
+Awaiting approval  : 11
+
+BY TYPE
+────────────────────────────────────────────────────────────────────────
+• ambiguous_date — 1
+• amount_sub_minor — 1
+• amount_thousands_separator — 1
+• amount_whitespace — 1
+• conflicting_duplicate — 2
+• currency_converted — 4
+• date_normalised — 19
+• exact_duplicate — 1
+• inactive_member_in_split — 1
+• missing_currency — 1
+• missing_payer — 1
+• negative_amount — 1
+• payer_name_variant — 3
+• percentage_sum_not_100 — 2
+• settlement_logged_as_expense — 2
+• split_details_ignored — 1
+• unknown_participant — 1
+• zero_amount — 1
+
+DETAIL (by CSV row)
+────────────────────────────────────────────────────────────────────────
+row   6 [WARNING] exact_duplicate [NEEDS APPROVAL]
+         Exact duplicate of row 5 (same date, amount, payer, description). Dropped.
+         → action: dropped duplicate (excluded from balances)
+row   7 [INFO] amount_thousands_separator
+         Amount "1,200" contained a thousands separator.
+         → action: stripped commas
+row   9 [INFO] payer_name_variant
+         Payer "priya" matched member "Priya".
+         → action: normalised name
+row  10 [WARNING] amount_sub_minor
+         Amount "899.995" had sub-paise precision; rounded to nearest paise.
+         → action: rounded half-up to paise
+row  11 [INFO] payer_name_variant
+         Payer "Priya S" matched member "Priya".
+         → action: normalised name
+row  13 [ERROR] missing_payer [NEEDS APPROVAL]
+         No payer recorded ("can't remember who paid"). Cannot compute who is owed.
+         → action: quarantined until a payer is assigned
+row  14 [WARNING] settlement_logged_as_expense [NEEDS APPROVAL]
+         Row looks like a payment (keyword); reclassified as a settlement to "Aisha".
+         → action: reclassified as settlement
+row  15 [WARNING] percentage_sum_not_100
+         percentages sum to 110%, not 100%; normalised proportionally
+         → action: see policy
+row  16 [INFO] date_normalised
+         Date "01/03/2026" (DD/MM/YYYY) normalised to 2026-03-01.
+         → action: normalised to 2026-03-01
+row  17 [INFO] date_normalised
+         Date "03/03/2026" (DD/MM/YYYY) normalised to 2026-03-03.
+         → action: normalised to 2026-03-03
+row  18 [INFO] date_normalised
+         Date "05/03/2026" (DD/MM/YYYY) normalised to 2026-03-05.
+         → action: normalised to 2026-03-05
+row  19 [INFO] date_normalised
+         Date "08/03/2026" (DD/MM/YYYY) normalised to 2026-03-08.
+         → action: normalised to 2026-03-08
+row  20 [INFO] date_normalised
+         Date "09/03/2026" (DD/MM/YYYY) normalised to 2026-03-09.
+         → action: normalised to 2026-03-09
+row  20 [INFO] currency_converted
+         USD 540.00 converted to INR at rate 83.
+         → action: converted at 83
+row  21 [INFO] date_normalised
+         Date "10/03/2026" (DD/MM/YYYY) normalised to 2026-03-10.
+         → action: normalised to 2026-03-10
+row  21 [INFO] currency_converted
+         USD 84.00 converted to INR at rate 83.
+         → action: converted at 83
+row  22 [INFO] date_normalised
+         Date "10/03/2026" (DD/MM/YYYY) normalised to 2026-03-10.
+         → action: normalised to 2026-03-10
+row  23 [INFO] date_normalised
+         Date "11/03/2026" (DD/MM/YYYY) normalised to 2026-03-11.
+         → action: normalised to 2026-03-11
+row  23 [INFO] currency_converted
+         USD 150.00 converted to INR at rate 83.
+         → action: converted at 83
+row  23 [WARNING] unknown_participant [NEEDS APPROVAL]
+         Participant "Dev's friend Kabir" is not a known member; added as guest "Kabir".
+         → action: created guest member
+row  24 [INFO] date_normalised
+         Date "11/03/2026" (DD/MM/YYYY) normalised to 2026-03-11.
+         → action: normalised to 2026-03-11
+row  24 [WARNING] conflicting_duplicate [NEEDS APPROVAL]
+         Possible duplicate of rows [24, 25] with differing amount/payer. Held for review — pick the correct row.
+         → action: held for approval (excluded from balances)
+row  25 [INFO] date_normalised
+         Date "11/03/2026" (DD/MM/YYYY) normalised to 2026-03-11.
+         → action: normalised to 2026-03-11
+row  25 [WARNING] conflicting_duplicate [NEEDS APPROVAL]
+         Possible duplicate of rows [24, 25] with differing amount/payer. Held for review — pick the correct row.
+         → action: held for approval (excluded from balances)
+row  26 [INFO] date_normalised
+         Date "12/03/2026" (DD/MM/YYYY) normalised to 2026-03-12.
+         → action: normalised to 2026-03-12
+row  26 [INFO] currency_converted
+         USD -30.00 converted to INR at rate 83.
+         → action: converted at 83
+row  26 [WARNING] negative_amount
+         Negative amount (-30) treated as a refund, not an error.
+         → action: kept as refund (negative shares)
+row  27 [WARNING] date_normalised
+         Date "Mar 14" (Mon DD (year inferred)) normalised to 2026-03-14.
+         → action: normalised to 2026-03-14
+row  27 [INFO] payer_name_variant
+         Payer "rohan" matched member "Rohan".
+         → action: normalised name
+row  28 [INFO] date_normalised
+         Date "15/03/2026" (DD/MM/YYYY) normalised to 2026-03-15.
+         → action: normalised to 2026-03-15
+row  28 [WARNING] missing_currency [NEEDS APPROVAL]
+         Currency missing; defaulted to group base INR.
+         → action: defaulted to INR
+row  29 [INFO] date_normalised
+         Date "18/03/2026" (DD/MM/YYYY) normalised to 2026-03-18.
+         → action: normalised to 2026-03-18
+row  29 [INFO] amount_whitespace
+         Amount " 1450 " had surrounding whitespace.
+         → action: trimmed
+row  30 [INFO] date_normalised
+         Date "20/03/2026" (DD/MM/YYYY) normalised to 2026-03-20.
+         → action: normalised to 2026-03-20
+row  31 [INFO] date_normalised
+         Date "22/03/2026" (DD/MM/YYYY) normalised to 2026-03-22.
+         → action: normalised to 2026-03-22
+row  31 [WARNING] zero_amount [NEEDS APPROVAL]
+         Zero amount; row has no financial effect.
+         → action: skipped (excluded from balances)
+row  32 [INFO] date_normalised
+         Date "25/03/2026" (DD/MM/YYYY) normalised to 2026-03-25.
+         → action: normalised to 2026-03-25
+row  32 [WARNING] percentage_sum_not_100
+         percentages sum to 110%, not 100%; normalised proportionally
+         → action: see policy
+row  33 [INFO] date_normalised
+         Date "28/03/2026" (DD/MM/YYYY) normalised to 2026-03-28.
+         → action: normalised to 2026-03-28
+row  34 [INFO] date_normalised
+         Date "04/05/2026" (DD/MM/YYYY) normalised to 2026-05-04.
+         → action: normalised to 2026-05-04
+row  34 [WARNING] ambiguous_date [NEEDS APPROVAL]
+         Date "04/05/2026" sits out of chronological order (interpreted as 2026-05-04, but neighbours are 2026-03-28 and 2026-04-01). Likely a misread day/month — confirm the intended date.
+         → action: kept as 2026-05-04, flagged for confirmation
+row  36 [WARNING] inactive_member_in_split [NEEDS APPROVAL]
+         "Meera" was not an active member on 2026-04-02; removed from this split.
+         → action: dropped from split & re-split among active members
+row  38 [WARNING] settlement_logged_as_expense [NEEDS APPROVAL]
+         Row looks like a payment (keyword); reclassified as a settlement to "Aisha".
+         → action: reclassified as settlement
+row  42 [INFO] split_details_ignored
+         split_type=equal but split_details were present; honoured equal split.
+         → action: ignored split_details
+────────────────────────────────────────────────────────────────────────

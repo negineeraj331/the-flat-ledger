@@ -2,6 +2,7 @@
   "name": "shared-expenses-app",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Shared expenses app for a flatshare — messy-CSV import, multi-currency, time-bounded membership.",
   "workspaces": [
     "server",
