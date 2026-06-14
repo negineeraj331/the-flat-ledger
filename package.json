@@ -1,0 +1,22 @@
+{
+  "name": "shared-expenses-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared expenses app for a flatshare — messy-CSV import, multi-currency, time-bounded membership.",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --workspace server run dev",
+    "dev:client": "npm --workspace client run dev",
+    "build": "npm --workspace client run build",
+    "db:reset": "npm --workspace server run db:reset",
+    "import:csv": "npm --workspace server run import:csv",
+    "test": "npm --workspace server test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
