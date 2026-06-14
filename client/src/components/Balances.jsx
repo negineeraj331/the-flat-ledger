@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react';
-import { api, formatMinor } from '../api.js';
+import { api, formatMinor, formatAccounting } from '../api.js';
 
 export default function Balances({ groupId, members, baseCurrency }) {
   const [data, setData] = useState(null);
@@ -27,9 +27,11 @@ export default function Balances({ groupId, members, baseCurrency }) {
     <div>
       {/* Aisha: one number per person */}
       <div className="card">
+        <div className="section-eyebrow">Statement of accounts</div>
         <h3>Net balance per person</h3>
-        <p className="muted small">Positive = the group owes them. Negative = they owe the group.
-          Click a row to see exactly which expenses make it up (Rohan’s view).</p>
+        <p className="muted small">Read it like a ledger: a plain figure is owed <em>to</em> them
+          (in the black); a red <span className="debit">(figure)</span> is what they owe
+          (in the red). Click a row to see every expense behind it (Rohan’s view).</p>
         <table className="table">
           <thead><tr><th>Member</th><th className="r">Paid</th><th className="r">Share of expenses</th><th className="r">Net</th><th></th></tr></thead>
           <tbody>
@@ -39,7 +41,9 @@ export default function Balances({ groupId, members, baseCurrency }) {
                   <td>{b.name} {b.member_type === 'guest' && <span className="tag">guest</span>}</td>
                   <td className="r">{fmt(b.paid_minor)}</td>
                   <td className="r">{fmt(b.owed_minor)}</td>
-                  <td className={'r ' + (b.net_minor >= 0 ? 'pos' : 'neg')}><strong>{fmt(b.net_minor)}</strong></td>
+                  <td className={'r net ' + (b.net_minor >= 0 ? 'credit' : 'debit')}>
+                    <strong>{formatAccounting(b.net_minor, baseCurrency)}</strong>
+                  </td>
                   <td className="r"><button className="link" onClick={(e) => { e.stopPropagation(); setSettleFor(b); }}>settle</button></td>
                 </tr>
                 {openMember === b.id && ledger && (
@@ -53,11 +57,17 @@ export default function Balances({ groupId, members, baseCurrency }) {
 
       {/* Aisha: who pays whom */}
       <div className="card">
-        <h3>Suggested settlements — who pays whom</h3>
-        {data.transfers.length === 0 && <p className="muted">All settled up. 🎉</p>}
+        <div className="section-eyebrow">Closing entries</div>
+        <h3>Who pays whom</h3>
+        <p className="muted small">The fewest payments that settle every balance at once.</p>
+        {data.transfers.length === 0 && <p className="muted">All settled up — the ledger is balanced.</p>}
         <ul className="transfers">
           {data.transfers.map((t, i) => (
-            <li key={i}><strong>{t.from}</strong> pays <strong>{t.to}</strong> <span className="amt">{fmt(t.amount_minor)}</span></li>
+            <li key={i}>
+              <span className="who"><strong>{t.from}</strong> <span className="arrow">──▶</span> <strong>{t.to}</strong></span>
+              <span className="leader" />
+              <span className="amt">{fmt(t.amount_minor)}</span>
+            </li>
           ))}
         </ul>
       </div>

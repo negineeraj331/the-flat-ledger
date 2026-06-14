@@ -13,7 +13,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <Link to="/" className="brand">🏠 Flatshare Expenses</Link>
+        <Link to="/" className="brand">The Flat Ledger</Link>
         {user && (
           <div className="topbar-right">
             <span className="muted">{user.name || user.email}</span>

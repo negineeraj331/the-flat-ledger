@@ -1,102 +1,251 @@
+/* ============================================================================
+   The Flat Ledger — visual design
+   ----------------------------------------------------------------------------
+   Concept: a warm accounting ledger on paper, not a generic dark dashboard.
+   Money is set in a monospaced face with tabular figures so columns align like
+   a real ledger; negatives use accountant's notation — red (₹x.xx) in
+   parentheses. A red "margin rule" and ruled lines carry the ledger metaphor.
+   Boldness is spent on the numerals + ruled paper; everything else stays quiet.
+   (Built with the Anthropic frontend-design skill: .claude/skills/frontend-design)
+   ============================================================================ */
+
 :root {
-  --bg: #0f1115;
-  --panel: #181b22;
-  --panel2: #1f232c;
-  --border: #2a2f3a;
-  --text: #e6e9ef;
-  --muted: #8b93a3;
-  --accent: #4f8cff;
-  --pos: #3ec98a;
-  --neg: #ff6b6b;
-  --warn: #ffb454;
-  --err: #ff6b6b;
-  --ok: #3ec98a;
+  /* palette — ink on warm ledger paper */
+  --paper:        #f3f2ea;
+  --paper-2:      #eceadf;
+  --sheet:        #fbfaf4;  /* card surface: a fresh sheet */
+  --ink:          #1b2333;
+  --ink-soft:     #5c6373;
+  --ink-faint:    #8a8f9c;
+  --rule:         #ddd9cc;  /* hairline ledger rules */
+  --rule-strong:  #c7c2b0;
+  --margin:       #c0492f;  /* the red margin line / debit ink */
+  --credit:       #146b53;  /* "in the black": owed to you */
+  --debit:        #b23a2e;  /* "in the red": you owe */
+  --gold:         #9a6a17;  /* guest / accent detail */
+  --warn:         #b07400;
+  --shadow:       0 1px 0 rgba(27,35,51,0.04), 0 12px 28px -18px rgba(27,35,51,0.30);
+
+  --font-ui:   'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
+
 * { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
 body {
   margin: 0;
-  font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg); color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* faint ledger-paper grain: two crossing hairline gradients, very low alpha */
+  background-image:
+    linear-gradient(transparent 0, transparent calc(100% - 1px), rgba(27,35,51,0.03) 100%),
+    radial-gradient(rgba(27,35,51,0.015) 1px, transparent 1px);
+  background-size: 100% 1.55em, 18px 18px;
 }
-a { color: var(--accent); text-decoration: none; }
-code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
-hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+/* money & data: tabular monospace everywhere numbers must align */
+.mono, .money, td.r, .stat-value, .amt, .net, code, input[type="number"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+a:hover { border-bottom-color: var(--margin); }
+a.plain, a.brand, a.group-card { border-bottom: none; }
+
+code {
+  background: var(--paper-2); padding: 1px 6px; border-radius: 3px;
+  font-size: 0.85em; border: 1px solid var(--rule);
+}
+hr { border: none; border-top: 1px solid var(--rule); margin: 16px 0; }
+
+::selection { background: rgba(192,73,47,0.18); }
+
+/* ---- layout shell -------------------------------------------------------- */
+.app { min-height: 100vh; }
 
 .topbar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--panel);
+  padding: 14px 24px;
+  background: var(--paper);
+  border-bottom: 3px double var(--rule-strong);
+  position: sticky; top: 0; z-index: 5;
 }
-.brand { font-weight: 700; font-size: 17px; }
-.topbar-right { display: flex; gap: 14px; align-items: center; }
-.container { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; }
-.center { display: grid; place-items: center; height: 60vh; }
+.brand {
+  font-weight: 700; font-size: 18px; letter-spacing: -0.01em;
+  display: inline-flex; align-items: baseline; gap: 8px;
+}
+.brand::before {
+  content: '₹'; font-family: var(--font-mono); font-weight: 700;
+  color: var(--margin);
+  border: 2px solid var(--margin); border-radius: 50%;
+  width: 26px; height: 26px; display: inline-grid; place-items: center;
+  font-size: 13px; transform: translateY(3px);
+}
+.topbar-right { display: flex; gap: 16px; align-items: center; }
+.topbar-right .muted { font-family: var(--font-mono); font-size: 13px; }
 
-h1 { font-size: 24px; margin: 8px 0 16px; }
-h3 { margin: 0 0 10px; }
-h4 { margin: 14px 0 6px; }
-.small { font-size: 12px; } .muted { color: var(--muted); }
-.pos { color: var(--pos); } .neg { color: var(--neg); }
-.error { color: var(--err); } .ok-text { color: var(--ok); }
+.container { max-width: 1000px; margin: 0 auto; padding: 28px 24px 96px; }
+.center { display: grid; place-items: center; height: 60vh; color: var(--ink-soft); }
 
+/* ---- headings & eyebrows ------------------------------------------------- */
+h1 { font-size: 27px; letter-spacing: -0.02em; margin: 10px 0 6px; font-weight: 700; }
+h3 { margin: 0 0 12px; font-size: 17px; letter-spacing: -0.01em; }
+h4 {
+  margin: 16px 0 8px; font-size: 11px; font-family: var(--font-mono);
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-soft); font-weight: 700;
+}
+.small { font-size: 12px; }
+.muted { color: var(--ink-soft); }
+
+/* semantic money colours — accounting convention */
+.pos, .credit { color: var(--credit); }
+.neg, .debit  { color: var(--debit); }
+.error { color: var(--debit); font-size: 13px; }
+.ok-text { color: var(--credit); font-family: var(--font-mono); font-size: 13px; }
+
+/* ---- cards: sheets with a red ledger margin rule (the signature) --------- */
 .card {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 12px; padding: 18px; margin-bottom: 18px;
+  position: relative;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px 22px 22px 30px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
 }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px; }
-.group-card { display: block; }
+/* the vertical red margin line, like ruled accounting paper */
+.card::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 14px;
+  width: 1.5px; background: var(--margin); opacity: 0.55;
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--margin); font-weight: 700; margin-bottom: 4px;
+}
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.group-card { display: block; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.group-card:hover { transform: translateY(-2px); }
 .group-card h3 { margin: 0 0 4px; }
 
+/* ---- controls ------------------------------------------------------------ */
 button {
-  font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--border);
-  background: var(--panel2); color: var(--text); padding: 8px 14px;
+  font-family: var(--font-ui); font-size: 14px; font-weight: 600; cursor: pointer;
+  border-radius: 4px; border: 1px solid var(--rule-strong);
+  background: var(--paper); color: var(--ink); padding: 9px 16px;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
-button.primary { background: var(--accent); border-color: var(--accent); color: white; font-weight: 600; }
-button.link { background: none; border: none; color: var(--accent); padding: 2px 6px; }
-button.link.danger { color: var(--neg); }
-button:disabled { opacity: 0.5; cursor: default; }
+button:hover { border-color: var(--ink); }
+button.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+button.primary:hover { background: #11182a; }
+button.link {
+  background: none; border: none; color: var(--ink); padding: 3px 4px;
+  border-bottom: 1.5px solid var(--margin); border-radius: 0; font-weight: 600;
+}
+button.link:hover { color: var(--margin); }
+button.link.danger { border-bottom-color: var(--debit); color: var(--debit); }
+button:disabled { opacity: 0.45; cursor: default; }
 
 input, select {
-  font: inherit; background: var(--bg); color: var(--text);
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; width: 100%;
+  font-family: var(--font-ui); font-size: 14px; width: 100%;
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--rule-strong); border-radius: 4px; padding: 9px 11px;
 }
-label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
-label.inline, label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--text); }
-.mini { width: 90px; } .inline input { width: 150px; }
-.row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+input:focus, select:focus, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--margin); outline-offset: 2px; border-color: var(--margin);
+}
+input[type="file"] { padding: 9px; background: var(--paper-2); border-style: dashed; cursor: pointer; }
+
+label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; }
+label.inline, label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); }
+.mini { width: 96px; } .inline input { width: 156px; }
+.row { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
 .row.spread { justify-content: space-between; align-items: center; }
 
-.auth-card { max-width: 360px; margin: 40px auto; }
-.switch { margin-top: 12px; }
+.auth-card { max-width: 380px; margin: 56px auto; }
+.switch { margin-top: 14px; }
 
-.tabs, .filters { display: flex; gap: 6px; margin: 12px 0 16px; flex-wrap: wrap; }
-.tab { background: var(--panel2); border: 1px solid var(--border); }
-.tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+/* ---- tabs / filters: ledger index tabs ----------------------------------- */
+.tabs, .filters { display: flex; gap: 4px; margin: 16px 0 18px; flex-wrap: wrap; }
+.tab {
+  background: transparent; border: 1px solid transparent; border-radius: 0;
+  border-bottom: 2px solid transparent; padding: 7px 12px; color: var(--ink-soft);
+}
+.tab:hover { border-color: transparent; border-bottom-color: var(--rule-strong); color: var(--ink); }
+.tab.active { color: var(--ink); border-bottom-color: var(--margin); }
 
+/* ---- tables: ruled ledger lines, mono money ------------------------------ */
 .table { width: 100%; border-collapse: collapse; }
-.table th, .table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-.table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+.table th, .table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.table thead th { border-bottom: 2px solid var(--rule-strong); }
+.table th {
+  color: var(--ink-soft); font-weight: 700; font-size: 10.5px;
+  font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em;
+}
 .table td.r, .table th.r { text-align: right; }
-.table.small td { padding: 4px 8px; font-size: 13px; border-bottom: 1px solid var(--panel2); }
-.clickable { cursor: pointer; } .clickable:hover { background: var(--panel2); }
-.dim { opacity: 0.55; }
+.table tbody tr:last-child td { border-bottom: none; }
+.table.small td { padding: 5px 9px; font-size: 13px; border-bottom: 1px dotted var(--rule); }
+.clickable { cursor: pointer; transition: background 0.1s ease; }
+.clickable:hover { background: var(--paper-2); }
+.dim { opacity: 0.5; }
 
-.tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 20px; background: var(--panel2); border: 1px solid var(--border); margin-left: 6px; }
-.tag.ok { color: var(--ok); border-color: var(--ok); }
-.tag.warn { color: var(--warn); border-color: var(--warn); }
-.tag.err { color: var(--err); border-color: var(--err); }
-.tag.muted { color: var(--muted); }
+/* ---- stamps / tags ------------------------------------------------------- */
+.tag {
+  display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  padding: 1px 7px; border-radius: 3px; background: var(--paper-2);
+  border: 1px solid var(--rule-strong); color: var(--ink-soft);
+  margin-left: 6px; text-transform: lowercase; letter-spacing: 0.02em; vertical-align: middle;
+}
+.tag.ok   { color: var(--credit); border-color: var(--credit); background: rgba(20,107,83,0.07); }
+.tag.warn { color: var(--warn);   border-color: var(--warn);   background: rgba(176,116,0,0.07); }
+.tag.err  { color: var(--debit);  border-color: var(--debit);  background: rgba(178,58,46,0.07); }
+.tag.muted { color: var(--ink-faint); }
 
-.transfers { list-style: none; padding: 0; }
-.transfers li { padding: 8px 0; border-bottom: 1px solid var(--border); }
-.transfers .amt { float: right; color: var(--accent); font-weight: 600; }
+/* ---- who-pays-whom: receipt leader-dot lines ----------------------------- */
+.transfers { list-style: none; padding: 0; margin: 0; }
+.transfers li {
+  display: flex; align-items: baseline; gap: 8px; padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.transfers li:last-child { border-bottom: none; }
+.transfers li .who { white-space: nowrap; }
+.transfers li .leader { flex: 1; border-bottom: 2px dotted var(--rule-strong); transform: translateY(-4px); }
+.transfers .amt { color: var(--debit); font-weight: 700; white-space: nowrap; }
+.arrow { color: var(--margin); font-family: var(--font-mono); }
 
-.ledger { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; background: var(--panel2); padding: 14px; border-radius: 8px; }
-.participants { background: var(--panel2); padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-.participant { display: flex; gap: 10px; align-items: center; padding: 3px 0; }
+/* ---- ledger drill-down --------------------------------------------------- */
+.ledger { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; background: var(--paper-2); padding: 16px; border-radius: 4px; }
+.participants { background: var(--paper-2); padding: 14px; border-radius: 4px; margin-bottom: 14px; }
+.participant { display: flex; gap: 12px; align-items: center; padding: 4px 0; }
 
-.stats { display: flex; gap: 28px; }
-.stat-value { font-size: 26px; font-weight: 700; }
-.stat-label { font-size: 12px; }
+/* ---- stats: ledger totals ------------------------------------------------ */
+.stats { display: flex; gap: 0; flex-wrap: wrap; }
+.stat { padding: 4px 28px 4px 0; margin-right: 28px; border-right: 1px solid var(--rule); }
+.stat:last-child { border-right: none; }
+.stat-value { font-size: 30px; font-weight: 700; line-height: 1.1; }
+.stat-label { font-size: 10.5px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; }
 
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: grid; place-items: center; z-index: 10; }
-.modal { width: 380px; max-width: 92vw; }
+/* ---- modal --------------------------------------------------------------- */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(27,35,51,0.45); display: grid; place-items: center; z-index: 20; backdrop-filter: blur(2px); }
+.modal { width: 400px; max-width: 92vw; box-shadow: 0 24px 60px -20px rgba(27,35,51,0.5); }
+
+/* ---- responsive ---------------------------------------------------------- */
+@media (max-width: 620px) {
+  .ledger { grid-template-columns: 1fr; }
+  .container { padding: 20px 16px 80px; }
+  .stats { gap: 16px; }
+  .stat { border-right: none; margin-right: 0; }
+}
+
+/* quality floor: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

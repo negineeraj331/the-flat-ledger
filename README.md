@@ -1,4 +1,4 @@
-# Flatshare Expenses
+# The Flat Ledger
 
 A shared-expenses app for a flatshare whose spreadsheet became a mess: mixed
 date formats, duplicate rows, a settlement logged as an expense, dollar amounts

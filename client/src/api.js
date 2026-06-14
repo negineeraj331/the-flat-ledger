@@ -33,3 +33,10 @@ export function formatMinor(minor, currency = 'INR') {
   const cents = String(abs % 100).padStart(2, '0');
   return `${negative ? '-' : ''}${symbol}${major}.${cents}`;
 }
+
+// Accounting notation: negatives are wrapped in parentheses, the way a ledger
+// shows money owed — e.g. (₹2,490.00). Positives are shown plain.
+export function formatAccounting(minor, currency = 'INR') {
+  const plain = formatMinor(Math.abs(minor), currency);
+  return minor < 0 ? `(${plain})` : plain;
+}

@@ -55,6 +55,7 @@ export default function ImportPanel({ groupId }) {
   return (
     <div>
       <div className="card">
+        <div className="section-eyebrow">Posting the books</div>
         <h3>Import expenses_export.csv</h3>
         <p className="muted small">Upload the CSV exactly as exported — no hand-editing. The importer detects
           each data problem, applies a documented policy, and logs it below. Re-importing creates a new run.</p>
@@ -78,7 +79,10 @@ export default function ImportPanel({ groupId }) {
 
       <div className="card">
         <div className="row spread">
-          <h3>Anomaly log & approval queue</h3>
+          <div>
+            <div className="section-eyebrow">Reconciliation</div>
+            <h3>Anomaly log & approval queue</h3>
+          </div>
           <div className="filters">
             {['all', 'pending', 'error', 'warning'].map((f) => (
               <button key={f} className={filter === f ? 'tab active' : 'tab'} onClick={() => setFilter(f)}>{f}</button>
