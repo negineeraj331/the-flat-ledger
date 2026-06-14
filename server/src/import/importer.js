@@ -392,59 +392,88 @@ function markDuplicates(parsed) {
 
 // ===========================================================================
 // Phase 3: persist everything in the caller's transaction.
+// ---------------------------------------------------------------------------
+// Inserts are BATCHED into a handful of multi-row statements rather than one
+// query per row. The importer can write ~250 rows; doing that as 250 sequential
+// round-trips to a remote (possibly cross-region) Postgres blows past serverless
+// time limits. Batching turns it into ~4 queries. PostgreSQL guarantees that a
+// single INSERT ... RETURNING returns rows in VALUES order, so we can zip the
+// returned expense ids back onto the parsed rows.
 // ===========================================================================
 async function persist(client, group, importRunId, parsed) {
-  const allAnomalies = [];
+  if (parsed.length === 0) return [];
+
+  // 1) bulk-insert the expense headers, get their ids back in order.
+  const expRows = parsed.map((p) => [
+    group.id, p.spent_on, p.description, p.paid_by, p.amount_minor,
+    p.original_amount_minor, p.original_currency, p.fx_rate ?? 1,
+    p.split_type ?? 'equal', p.kind, p.status, p.notes, p.source_row, importRunId,
+  ]);
+  const expRes = await bulkInsert(client, 'expenses',
+    ['group_id', 'spent_on', 'description', 'paid_by', 'amount_minor',
+     'original_amount_minor', 'original_currency', 'fx_rate', 'split_type',
+     'kind', 'status', 'notes', 'source_row', 'import_run_id'],
+    expRows, 'RETURNING id');
+  parsed.forEach((p, i) => { p.expense_id = expRes.rows[i].id; });
+
+  // 2) bulk-insert splits.
+  const splitRows = [];
   for (const p of parsed) {
-    const exp = await client.query(
-      `INSERT INTO expenses
-         (group_id, spent_on, description, paid_by, amount_minor,
-          original_amount_minor, original_currency, fx_rate, split_type,
-          kind, status, notes, source_row, import_run_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-       RETURNING id`,
-      [group.id, p.spent_on, p.description, p.paid_by, p.amount_minor,
-       p.original_amount_minor, p.original_currency, p.fx_rate ?? 1,
-       p.split_type ?? 'equal', p.kind, p.status, p.notes, p.source_row, importRunId]
-    );
-    const expenseId = exp.rows[0].id;
-    p.expense_id = expenseId;
+    for (const s of p.splits ?? []) splitRows.push([p.expense_id, s.member_id, s.share_minor]);
+  }
+  if (splitRows.length) {
+    await bulkInsert(client, 'expense_splits',
+      ['expense_id', 'member_id', 'share_minor'], splitRows);
+  }
 
-    // splits
-    for (const s of p.splits ?? []) {
-      await client.query(
-        `INSERT INTO expense_splits (expense_id, member_id, share_minor)
-         VALUES ($1,$2,$3)`,
-        [expenseId, s.member_id, s.share_minor]
-      );
-    }
-
-    // settlement mirror
+  // 3) bulk-insert settlement mirrors.
+  const setRows = [];
+  for (const p of parsed) {
     if (p.kind === 'settlement' && p.settlement) {
-      await client.query(
-        `INSERT INTO settlements
-           (group_id, paid_on, from_member, to_member, amount_minor, note, source_row, expense_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [group.id, p.spent_on, p.settlement.from, p.settlement.to,
-         p.amount_minor, p.description, p.source_row, expenseId]
-      );
-    }
-
-    // anomalies
-    for (const a of p.anomalies) {
-      const saved = await client.query(
-        `INSERT INTO import_anomalies
-           (import_run_id, group_id, source_row, anomaly_type, severity,
-            message, action, status, raw_row, expense_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-         RETURNING id`,
-        [importRunId, group.id, a.source_row, a.type, a.severity, a.message,
-         a.action, a.status, JSON.stringify(p.raw), expenseId]
-      );
-      allAnomalies.push({ id: saved.rows[0].id, ...a, expense_id: expenseId });
+      setRows.push([group.id, p.spent_on, p.settlement.from, p.settlement.to,
+        p.amount_minor, p.description, p.source_row, p.expense_id]);
     }
   }
-  return allAnomalies;
+  if (setRows.length) {
+    await bulkInsert(client, 'settlements',
+      ['group_id', 'paid_on', 'from_member', 'to_member', 'amount_minor', 'note', 'source_row', 'expense_id'],
+      setRows);
+  }
+
+  // 4) bulk-insert anomalies, keep their ids aligned with the source objects.
+  const anomRows = [];
+  const anomMeta = [];
+  for (const p of parsed) {
+    for (const a of p.anomalies) {
+      anomRows.push([importRunId, group.id, a.source_row, a.type, a.severity,
+        a.message, a.action, a.status, JSON.stringify(p.raw), p.expense_id]);
+      anomMeta.push({ a, expense_id: p.expense_id });
+    }
+  }
+  if (!anomRows.length) return [];
+  const anomRes = await bulkInsert(client, 'import_anomalies',
+    ['import_run_id', 'group_id', 'source_row', 'anomaly_type', 'severity',
+     'message', 'action', 'status', 'raw_row', 'expense_id'],
+    anomRows, 'RETURNING id');
+  return anomRes.rows.map((r, i) => ({ id: r.id, ...anomMeta[i].a, expense_id: anomMeta[i].expense_id }));
+}
+
+/**
+ * Insert many rows in a single statement. Builds a parameterised
+ * `($1,$2,..),($n,..)` placeholder list so values are never string-interpolated.
+ * @param {string[]} cols  column names
+ * @param {any[][]}  rows  array of value-arrays (each same length as cols)
+ * @param {string}   suffix optional trailing clause, e.g. 'RETURNING id'
+ */
+async function bulkInsert(client, table, cols, rows, suffix = '') {
+  const placeholders = rows
+    .map((_, r) => `(${cols.map((__, c) => `$${r * cols.length + c + 1}`).join(',')})`)
+    .join(',');
+  const params = rows.flat();
+  return client.query(
+    `INSERT INTO ${table} (${cols.join(',')}) VALUES ${placeholders} ${suffix}`,
+    params
+  );
 }
 
 // ===========================================================================
