@@ -365,7 +365,8 @@ function markDuplicates(parsed) {
       // exact duplicate: keep the first, drop the rest.
       rows.slice(1).forEach((r) => {
         r.status = 'duplicate';
-        r.splits = [];
+        // keep the computed splits so approving/rejecting is a simple status
+        // flip (the balance query excludes non-'active' rows anyway).
         r.anomalies.push({
           source_row: r.source_row, type: 'exact_duplicate', severity: 'warning',
           message: `Exact duplicate of row ${rows[0].source_row} (same date, amount, payer, description). Dropped.`,
@@ -376,8 +377,8 @@ function markDuplicates(parsed) {
       // conflicting duplicate: don't guess — hold ALL for human resolution.
       const siblingRows = rows.map((r) => r.source_row).join(', ');
       rows.forEach((r) => {
-        r.status = 'pending_approval';
-        r.splits = []; // excluded from balances until resolved
+        r.status = 'pending_approval'; // excluded from balances until resolved
+        // splits are kept so resolving = flip the winner to 'active'.
         r.anomalies.push({
           source_row: r.source_row, type: 'conflicting_duplicate', severity: 'warning',
           message: `Possible duplicate of rows [${siblingRows}] with differing amount/payer. ` +
