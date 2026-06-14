@@ -50,6 +50,10 @@ export async function importCsvText({ client, text, group, importRunId }) {
     parsed.push(await normaliseRow(row, ctx));
   }
 
+  // Phase 1b — chronological sanity pass: flag dates that sit out of order in
+  // the file (the real "is this Apr 5 or May 4?" ambiguity, row 34).
+  flagOutOfOrderDates(parsed);
+
   // Phase 2 — duplicate detection across rows.
   markDuplicates(parsed);
 
@@ -93,11 +97,11 @@ async function normaliseRow(row, ctx) {
       'quarantined row until a valid date is supplied', true);
   } else {
     p.spent_on = d.iso;
-    if (d.ambiguous) {
-      add('ambiguous_date', 'warning',
-        `Date "${row.date}" is ambiguous (day & month both <= 12). Interpreted as DD/MM/YYYY -> ${d.iso}.`,
-        `interpreted as ${d.iso}`, true);
-    } else if (d.format !== 'ISO') {
+    // The slash format is established as DD/MM/YYYY (some rows have day > 12),
+    // so a plain DD/MM date is NOT treated as per-row ambiguous — that would be
+    // noise. Genuine ambiguity (a date that sits out of chronological order, the
+    // "04/05/2026 = Apr 5 or May 4?" case) is detected in a separate order pass.
+    if (d.format !== 'ISO') {
       const sev = d.format.startsWith('Mon') ? 'warning' : 'info';
       add('date_normalised', sev,
         `Date "${row.date}" (${d.format}) normalised to ${d.iso}.`,
@@ -307,6 +311,37 @@ async function buildParticipants(ctx, p, splitType, participantsRaw, details, ad
     });
   }
   return out;
+}
+
+// ===========================================================================
+// Phase 1b: chronological order sanity.
+// ===========================================================================
+// The CSV rows are otherwise in date order. A row whose date is a strict local
+// extremum (greater than BOTH neighbours, or smaller than both) is out of place
+// and likely a misread date — e.g. row 34 "04/05/2026" interpreted as 4 May
+// sticks out between 28 Mar and 1 Apr. We flag it for human confirmation rather
+// than silently trusting our DD/MM interpretation.
+function flagOutOfOrderDates(parsed) {
+  const dated = parsed.filter((p) => p.spent_on && p.status !== 'quarantined');
+  for (let i = 1; i < dated.length - 1; i++) {
+    const prev = dated[i - 1].spent_on;
+    const cur = dated[i].spent_on;
+    const next = dated[i + 1].spent_on;
+    // Only blame `cur` when its neighbours are themselves consistent (ascending)
+    // yet `cur` falls outside [prev, next]. This isolates the single intruder
+    // (row 34) instead of also flagging its blameless neighbour (row 35).
+    const neighboursConsistent = prev < next;
+    const curIsIntruder = cur < prev || cur > next;
+    if (neighboursConsistent && curIsIntruder) {
+      dated[i].anomalies.push({
+        source_row: dated[i].source_row, type: 'ambiguous_date', severity: 'warning',
+        message: `Date "${dated[i].raw.date}" sits out of chronological order ` +
+          `(interpreted as ${cur}, but neighbours are ${prev} and ${next}). ` +
+          `Likely a misread day/month — confirm the intended date.`,
+        action: `kept as ${cur}, flagged for confirmation`, status: 'pending_approval',
+      });
+    }
+  }
 }
 
 // ===========================================================================
