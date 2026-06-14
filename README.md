@@ -6,7 +6,7 @@ treated as rupees, and members who joined/left mid-stream. The app imports that
 exact CSV, **detects and documents every data problem**, and produces clean,
 explainable balances.
 
-- **Live app:** _<add your Vercel URL here after deploying>_
+- **Live app:** https://the-flat-ledger-server-r93o.vercel.app
 - **Stack:** React (Vite) · Node/Express · PostgreSQL (plain SQL via `pg`) · Neon · Vercel
 - **AI collaborator:** Claude (Claude Code, model Opus 4.8). See [AI_USAGE.md](./AI_USAGE.md).
 
